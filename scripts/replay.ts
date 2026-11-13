@@ -54,16 +54,23 @@ export async function runCase(base:string,schedule:Schedule) {
     socket.send(JSON.stringify({type:'cf_agent_use_chat_request',id:'request-1',init:{method:'POST',body:JSON.stringify({messages:[{id:'user-1',role:'user',parts:[{type:'text',text:`Synthetic location ${schedule.seed}`}]}],tool})}}));
     await waitChunk(tool?'tool-input-available':'text-delta');
     await until(snapshot,s=>s.invocations.length===1,'initial invocation');
-    const steer=async(id='steer-1')=>{await control('steer',{id,text:`Use Paris, Texas (${schedule.seed}).`});await waitChunk('steering-message');};
+    const steer=async(id='steer-1')=>{
+      const count=frames.filter(f=>chunk(f)?.type==='steering-message').length;
+      await control('steer',{id,text:`Use Paris, Texas (${schedule.seed}).`});
+      await waitChunk('steering-message',count+1);
+    };
     const sendTool=async()=>{
+      await control('mark',{event:'tool-result',toolCallId:'lookup-1'});
       socket!.send(JSON.stringify({type:'cf_agent_tool_result',toolCallId:'lookup-1',toolName:'lookup',output:{city:'Paris, Texas'},autoContinue:true}));
       await until(async()=>frames,fs=>fs.some(f=>f.type==='cf_agent_message_updated' && JSON.stringify(f.message).includes('output-available')),'tool result acknowledged');
     };
     const cancel=async()=>{
+      await control('mark',{event:'cancel',requestId:'request-1'});
       socket!.send(JSON.stringify({type:'cf_agent_chat_request_cancel',id:'request-1'}));
       await until(snapshot,s=>s.events.some(e=>e.kind==='cancel-observed'),'SDK abort signal');
     };
     const c=schedule.caseId;
+    if(schedule.variant===1) await control('delta');
     if(c.startsWith('steer') || c.includes('steer')) {
       if(c==='steer-between-text') await control('delta');
       await steer();
@@ -71,15 +78,17 @@ export async function runCase(base:string,schedule:Schedule) {
       if(c==='steer-two') await steer('steer-2');
     }
     if(c.startsWith('reconnect')) {
+      await control('mark',{event:'disconnect'});
       const closed=once(socket,'close');
       socket.terminate();
       await closed;
       socket=await connect();
-      socket.send(JSON.stringify({type:'cf_agent_stream_resume_request',probeId:'probe-1'}));
-      await until(async()=>frames,fs=>fs.some(f=>f.type==='cf_agent_stream_resuming'),'resume handshake');
+      await control('mark',{event:'reconnect'});
+      await until(async()=>frames,fs=>fs.some(f=>f.replayComplete===true),'resume replay completed');
     }
-    // Seed changes where additional text is interleaved without violating the case's causal contract.
-    for(let i=0;i<schedule.variant;i++) await control('delta');
+    // Seeds interleave text before steering or after reconnection; case-specific
+    // tool/cancel order remains a hard causal constraint.
+    if(schedule.variant===2) await control('delta');
     if(c==='tool-before-cancel') {await sendTool();await cancel();}
     if(c==='tool-after-cancel'||c==='cancel-before-tool') {
       await cancel();
@@ -93,14 +102,19 @@ export async function runCase(base:string,schedule:Schedule) {
     // not an assertion that no invocation can ever happen in the future.
     await delay(180);
     const final=await snapshot();
+    await control('mark',{event:'reload'});
+    const reloadResponse=await fetch(`${endpoint}/get-messages`);
+    if(!reloadResponse.ok) throw new Error(`reload HTTP ${reloadResponse.status}`);
+    const reloaded=await reloadResponse.json() as Snapshot['messages'];
     const live=wireParts(frames);
     // Tool output is an explicit client event, independently present in the input schedule.
     if(tool) for(const p of live) if(p.toolCallId==='lookup-1') p.output={city:'Paris, Texas'};
-    const persisted=semanticParts(final.messages.filter(m=>m.role==='assistant').flatMap(m=>m.parts));
+    const persisted=semanticParts(reloaded.filter(m=>m.role==='assistant').flatMap(m=>m.parts));
     const cancelIndex=final.events.find(e=>e.kind==='cancel-observed')?.seq;
     const postCancelInvocations=cancelIndex===undefined?0:final.events.filter(e=>e.kind==='invocation'&&e.seq>cancelIndex).length;
     const ids=persisted.filter(p=>p.type==='steering-message').map(p=>p.id);
-    return {name,...schedule,frames,snapshot:final,live,persisted,divergence:compare(live,persisted),postCancelInvocations,duplicatePersistedChunks:ids.length-new Set(ids).size};
+    const unexpectedPostCancelInvocations=c==='tool-before-cancel'?postCancelInvocations:0;
+    return {name,...schedule,frames,snapshot:await snapshot(),live,persisted,divergence:compare(live,persisted),postCancelInvocations,unexpectedPostCancelInvocations,duplicatePersistedChunks:ids.length-new Set(ids).size};
   } finally {
     for(const s of sockets) if(s.readyState!==WebSocket.CLOSED) s.terminate();
   }
