@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "turnledger",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-13",
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": { "bindings": [{ "name": "Chat", "class_name": "LedgerChat" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LedgerChat"] }],
+  "observability": { "enabled": false }
+}

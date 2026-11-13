@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+artifacts/
+.env
+.env.*
+.dev.vars
+coverage/
+*.log
