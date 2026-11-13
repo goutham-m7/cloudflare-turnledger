@@ -1,20 +1,38 @@
-type MetricRun = {divergence:unknown;postCancelInvocations:number;unexpectedPostCancelInvocations:number;duplicatePersistedChunks:number};
-export function summarize(runs:MetricRun[]) {
-  return {schedules:runs.length,transcriptDivergences:runs.filter(r=>r.divergence!==null).length,
-    postCancelInvocations:runs.reduce((n,r)=>n+r.postCancelInvocations,0),
-    unexpectedPostCancelInvocations:runs.reduce((n,r)=>n+r.unexpectedPostCancelInvocations,0),
-    duplicatePersistedChunks:runs.reduce((n,r)=>n+r.duplicatePersistedChunks,0)};
+type MetricRun = {
+  divergence: unknown;
+  postCancelInvocations: number;
+  unexpectedPostCancelInvocations: number;
+  duplicatePersistedChunks: number;
+};
+export function summarize(runs: MetricRun[]) {
+  return {
+    schedules: runs.length,
+    transcriptDivergences: runs.filter((r) => r.divergence !== null).length,
+    postCancelInvocations: runs.reduce(
+      (n, r) => n + r.postCancelInvocations,
+      0,
+    ),
+    unexpectedPostCancelInvocations: runs.reduce(
+      (n, r) => n + r.unexpectedPostCancelInvocations,
+      0,
+    ),
+    duplicatePersistedChunks: runs.reduce(
+      (n, r) => n + r.duplicatePersistedChunks,
+      0,
+    ),
+  };
 }
 
 /** Synthetic report data is still untrusted HTML input. Render values with textContent only. */
-export function renderReport(report:unknown):string {
-  const json=JSON.stringify(report).replaceAll('<','\\u003c');
+export function renderReport(report: unknown): string {
+  const json = JSON.stringify(report).replaceAll("<", "\\u003c");
   return `<!doctype html>
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TurnLedger · Lifecycle evidence</title>
 <style>
 :root{--ink:#172b46;--muted:#506174;--line:#cbd5e1;--paper:#f4f7fb;--orange:#a34612;--blue:#195eb6;--missing:#fff0e8}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 system-ui,sans-serif}header{padding:30px 5vw 22px;background:white;border-top:6px solid #f48120;border-bottom:1px solid var(--line)}h1{font:600 38px/1.1 'Avenir Next',system-ui;margin:10px 0}p{max-width:850px;color:var(--muted)}.eyebrow{font:12px monospace;letter-spacing:.12em;color:var(--orange)}main{padding:25px 5vw}summary{cursor:pointer}pre,code{font:13px/1.65 'SFMono-Regular',Consolas,monospace}pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}.metrics{display:flex;flex-wrap:wrap;gap:20px;border-bottom:1px solid var(--line);padding-bottom:20px}.metrics div{min-width:190px}.metrics strong{display:block;font-size:25px;color:var(--blue)}label{display:block;font-weight:600;margin:20px 0 7px}select,button{font:inherit;color:var(--ink);background:white;border:1px solid #7c8da3;padding:8px 12px;border-radius:4px}button{cursor:pointer;margin-left:10px}input[type=range]{width:100%;accent-color:var(--orange)}:focus-visible{outline:3px solid var(--blue);outline-offset:3px}.columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}.pane{background:white;border:1px solid var(--line);border-radius:6px;overflow:hidden}.pane h2{font-size:14px;margin:0;padding:12px 16px;background:#e7eef8}.row{padding:15px 16px;border-top:1px solid var(--line);min-height:75px}.row.changed{background:var(--missing);border-left:4px solid var(--orange)}.status{padding:12px 16px;background:#e7eef8;margin:20px 0}.status.fail{background:var(--missing)}.subtitle{font-size:12px;color:var(--muted)}details{margin-top:18px}.empty{color:var(--muted);font-style:italic}a{color:var(--blue)}@media(max-width:650px){.columns{grid-template-columns:1fr}h1{font-size:30px}button{margin:8px 0}.metrics div{min-width:140px}}
+select{max-width:100%}
 </style>
 <header><div class="eyebrow">CLOUDFLARE AGENTS / LOCAL WORKERD / SQLITE</div><h1>Does the conversation survive reload?</h1><p>Wire observations on the left. The SDK’s reloaded transcript on the right. Same schedule, same cursor. The candidate uses Marcel Marais’s public steering fix; cancellation remains unpatched.</p></header>
 <main><section class="metrics" id="metrics" aria-label="Conformance metrics"></section>
