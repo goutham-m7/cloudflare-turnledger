@@ -1,0 +1,7 @@
+		case "steering-message": {
+			if (chunk.id != null && findDataPartByTypeAndId(parts, chunk.type, chunk.id)) {
+				return true;
+			}
+			parts.push({ type: "steering-message", id: chunk.id, parts: chunk.parts });
+			return true;
+		}
