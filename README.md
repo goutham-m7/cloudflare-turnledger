@@ -11,14 +11,14 @@ npm ci
 npm run demo
 ```
 
-Captured output (seed 42; timing is machine-specific):
+Captured output excerpt ([fresh-clone log](evidence/clean-clone.txt), seed 42; timing is machine-specific):
 
 ```text
 baseline: 52/100 transcript divergences; 24 post-cancel model entries (8 queued before stop); 0 duplicate persisted steering chunks
 upstream steering fix: 0/100 transcript divergences; 24 post-cancel model entries (8 queued before stop); 0 duplicate persisted steering chunks
 replaylab: 200 observations replayed; 0 effects during replay
 disk restart: both versions preserved exact messages and ledger
-duration: 53797 ms; 100 seeded schedules × 2 versions; 12 cases
+duration: 53555 ms; 100 seeded schedules × 2 versions; 12 cases
 ```
 
 The steering-only candidate **does not fix cancellation**. Of 24 post-cancel model entries, 16 follow new tool results submitted after Stop and are allowed by #2881’s stated policy. The other 8 follow results already queued before Stop. Those remain visible as findings, not folded into a passing average.

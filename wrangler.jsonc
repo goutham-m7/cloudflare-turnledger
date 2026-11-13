@@ -2,6 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "turnledger",
   "main": "src/worker.ts",
+  "send_metrics": false,
   "compatibility_date": "2026-11-13",
   "compatibility_flags": ["nodejs_compat"],
   "durable_objects": {

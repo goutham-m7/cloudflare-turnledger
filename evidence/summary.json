@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "seed": 42,
+  "agents": "0.33.0",
+  "aiChat": "0.12.2",
+  "model": "deterministic UI-message boundary",
+  "observationWindowMs": 180,
+  "baseline": {
+    "schedules": 100,
+    "transcriptDivergences": 52,
+    "postCancelInvocations": 24,
+    "unexpectedPostCancelInvocations": 8,
+    "duplicatePersistedChunks": 0,
+    "diskRestartVerified": true
+  },
+  "candidate": {
+    "schedules": 100,
+    "transcriptDivergences": 0,
+    "postCancelInvocations": 24,
+    "unexpectedPostCancelInvocations": 8,
+    "duplicatePersistedChunks": 0,
+    "diskRestartVerified": true
+  },
+  "durationMs": 53555,
+  "totalRecordedRuns": 200
+}
