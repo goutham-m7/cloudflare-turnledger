@@ -31,3 +31,7 @@ The documented manual `npm run dev -- --port 8942` command was also started; `GE
 `npm ci` emits an optional peer-dependency warning: the Agents build-time `@rolldown/plugin-babel` peer wants Vite 8 while Vitest 3 resolves Vite 7. The lockfile installation and all runtime tests succeeded without `--force` or `--legacy-peer-deps`. This fixture does not invoke that optional browser build plugin. The warning is preserved in the log rather than hidden.
 
 Only the model boundary is scripted. Synthetic client tool responses are explicit injected actions. Persistence, SDK reconstruction, resume transport and model-entry accounting are not mocked. Reload/restart verification follows completed turns; this does not establish mid-turn crash recovery or hosted Cloudflare durability.
+
+## Final committed-code verification
+
+A second fresh local clone of `ff220c2`, including the telemetry-disabled runtime configuration, completed `npm ci && npm run check && npm run demo` with exit code 0. [final-clone.txt](final-clone.txt) preserves the full output: 30 tests passed; the paired 100-schedule demo measured the same counts in 53,031 ms. The README excerpt, summary JSON and representative traces retain the first clean-clone run's 53,555 ms measurement; neither measurement is synthesized.
