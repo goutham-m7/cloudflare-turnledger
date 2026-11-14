@@ -2,7 +2,16 @@
 
 A lifecycle conformance adapter for [replaylab](vendor/NOTICE.md): compare what a chat client received with what the Agents SDK actually reloads from SQLite.
 
-For engineers building durable chat, [Agents #2878](https://github.com/cloudflare/agents/issues/2878) reports steering messages disappearing after reload. [PR #2881](https://github.com/cloudflare/agents/pull/2881) separately addresses queued continuations restarting the model after Stop. Both already have upstream authors. This project tests their surrounding lifecycle contracts; it does not claim either fix.
+## The problem
+
+People using durable AI chat expect a reload to preserve the conversation they saw and Stop to stop work already queued. Application developers must check those promises across streaming, persistence and cancellation—not just whether a model produced text.
+
+- Cloudflare Agents [issue #2878 (2026-11-12; 1 comment, checked 2026-11-14)](https://github.com/cloudflare/agents/issues/2878) reports steering messages disappearing after reload because their stream chunks are not persisted in SDK versions 0.32.0 and 0.33.0.
+- Public [PR #2881 (2026-11-12; checked 2026-11-14)](https://github.com/cloudflare/agents/pull/2881) documents queued tool-result continuations restarting the model after Stop and proposes dropping continuations already waiting when cancellation lands; new results arriving afterward remain allowed.
+
+TurnLedger compares client-visible messages, SQLite-reloaded transcripts and model-entry records across seeded local lifecycle schedules, using real SDK persistence and a scripted model boundary.
+
+Both narrow fixes already have upstream authors; this project supplies conformance evidence, not ownership of either fix.
 
 **52/100 transcript divergences on `agents@0.33.0`; 0/100 with Marcel Marais’s public steering fix.** Same 100 seeded schedules, real local workerd, real SDK stream processing and disk-backed SQLite. Only the model boundary is scripted.
 
